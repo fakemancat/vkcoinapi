@@ -25,10 +25,43 @@ module.exports = class VKCoin {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                form: {
+                body: {
                     tx,
                     key: this.key,
                     merchantId: this.userId
+                },
+                json: true,
+                method: 'POST'
+            }
+        );
+
+        return result;
+    }
+
+    /**
+     * @param {Number} toUserId - Айди получателя 
+     * @param {Number} amount - Количество коинов 
+     */
+    async sendPayment(toId, amount) {
+        if (typeof toId !== 'number') {
+            throw new Error('Айди должно быть числом');
+        }
+
+        if (typeof amount !== 'number') {
+            throw new Error('Сумма перевода должна быть числом');
+        }
+
+        const result = await request(
+            'https://coin-without-bugs.vkforms.ru/merchant/send/',
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    toId,
+                    amount,
+                    key: this.key,
+                    merchantId: this.userId,
                 },
                 json: true,
                 method: 'POST'
