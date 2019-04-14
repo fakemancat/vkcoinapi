@@ -1,3 +1,4 @@
+const random = require('./functions/random');
 const request = require('./functions/request');
 
 module.exports = class VKCoin {
@@ -69,5 +70,18 @@ module.exports = class VKCoin {
         );
 
         return result;
+    }
+
+    /**
+     * @param {Number} amount - Количество коинов для получения
+     * @param {Boolean} fixation - Фиксированная сумма или нет
+     */
+    getLink(amount, fixation) {
+        if (typeof amount !== 'number') {
+            throw new Error('Сумма перевода должна быть числом');
+        }
+
+        const payload = random(-2000000000, 2000000000);
+        return `https://vk.com/coin#x${this.userId}_${amount}_${payload}${fixation ? '' : '_1'}`;
     }
 };
