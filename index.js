@@ -49,7 +49,12 @@ class Updates {
             const messsage = data.data;
             if (!/^(?:TR)/i.test(messsage)) return;
             
-            const { amount, fromId, id } = messsage.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
+            let { amount, fromId, id } = messsage.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
+            
+            amount = Number(amount);
+            fromId = Number(fromId);
+            id = Number(id);
+
             const event = { amount, fromId, id };
 
             return callback(event);
