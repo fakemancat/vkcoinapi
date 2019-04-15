@@ -84,4 +84,16 @@ module.exports = class VKCoin {
         const payload = random(-2000000000, 2000000000);
         return `https://vk.com/coin#x${this.userId}_${amount}_${payload}${fixation ? '' : '_1'}`;
     }
+
+    /**
+     * @param {Number} coins - Входящее значение коинов
+     * @description Делает получаемое из API значение коинов читабельным
+     * Например, приходит значение 1234567890. Этот метод сделает значение таким: 1 234 567,890
+     */
+    formatCoins(coins) {
+        return (coins / 1000)
+            .toLocaleString()
+            .replace(/,/g, ' ')
+            .replace(/\./g, ',');
+    }
 };
