@@ -61,6 +61,23 @@ run().catch(console.error);
 |-|-|-|
 |toId|Number|Айди получателя|
 |amount|Number|Сумма перевода|
+#
+getLink - получет ссылку для перевода
+
+```js
+function run() {
+    const link = vkcoin.getLink(amount, fixation);
+    
+    console.log(link);
+}
+
+run().catch(console.error);
+```
+
+|Параметр|Тип|Описание|
+|-|-|-|
+|amount|Number|Сумма перевода|
+|fixation|Boolean|Фиксированная сумма или нет|
 # Ссылки
 * Мой вк: https://vk.com/fakeman.cat_fmc
 * Беседа: https://vk.me/join/AJQ1d_JeTA/o0GfCxwihS_6E
