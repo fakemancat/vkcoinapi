@@ -30,11 +30,11 @@ const vkcoin = new VKCOINAPI(options = {});
 |key|String|Ключ для взаимодействия с API|
 |userId|Number|Ваш айди ВК|
 # Методы
-getTranList - Получает список ваших транзакций
+getTransactionList - Получает список ваших транзакций
 
 ```js
 async function run() {
-    const result = await vkcoin.getTranList(tx);
+    const result = await vkcoin.getTransactionList(tx);
     
     console.log(result);
 }
@@ -85,7 +85,7 @@ formatCoins - Делает получаемое из API значение кои
 Это можно использовать в паре с другим методом:
 ```js
 async function run() {
-    const trans = await vkcoin.getTranList([2]);
+    const trans = await vkcoin.getTransactionList([2]);
 
     const fixTrans = trans.response.map((tran) => {
         tran.amount = vkcoin.formatCoins(tran.amount);
