@@ -123,6 +123,44 @@ run().catch(console.error);
 |Параметр|Тип|Описание|
 |-|-|-|
 |userIds|Array<Number>|Массив айди пользователей|
+# Updates
+**updates** - Позволяет "прослушивать" события в VK Coin. Пока что я реализовал перехват входящего платежа, но вскоре придумаю что-нибудь ещё. И да, впервые работаю с сокетами :)
+### Запуск
+Для запуска прослушивания есть специальный метод startPolling. Он является асинхронным, поэтому запускать его нужно в асинхронной функции:
+
+```js
+async function run() {
+    await vkcoin.updates.startPolling();
+    
+    /* Тут ваши действия со слушателем */
+}
+
+run().catch(console.error);
+```
+
+Метод не принимает аргументов
+#
+updates.onTransfer - Перехватывает входящие платежи, принимает один аргумент
+
+```js
+async function run() {
+    await vkcoin.updates.startPolling();
+
+    vkcoin.updates.onTransfer((event) => {
+        console.log(event);
+    });
+}
+
+run().catch(console.error);
+```
+
+event - Объект, который хранит в себе информацию о платеже:
+
+|Параметр|Тип|Описание|
+|-|-|-|
+|amount|Number|Количество коинов, которые послупили на счёт|
+|fromId|Number|Айди плательщика|
+|id|Number|Айди платежа|
 # Ссылки
 * Мой вк: https://vk.com/fakeman.cat_fmc
 * Беседа: https://vk.me/join/AJQ1d_JeTA/o0GfCxwihS_6E
