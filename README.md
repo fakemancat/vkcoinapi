@@ -30,7 +30,7 @@ const vkcoin = new VKCOINAPI(options = {});
 |key|String|Ключ для взаимодействия с API|
 |userId|Number|Ваш айди ВК|
 # Методы
-getTranList - получает список ваших транзакций
+getTranList - Получает список ваших транзакций
 
 ```js
 async function run() {
@@ -46,7 +46,7 @@ run().catch(console.error);
 |-|-|-|
 |tx|Array<Number>|Массив айди переводов для получения ИЛИ [1] - последняя 1000 транзакций, [2] - 100|
 #
-sendPayment - делает перевод другому пользователю
+sendPayment - Делает перевод другому пользователю
 
 ```js
 async function run() {
@@ -63,7 +63,7 @@ run().catch(console.error);
 |toId|Number|Айди получателя|
 |amount|Number|Сумма перевода|
 #
-getLink - получает ссылку для перевода
+getLink - Получает ссылку для перевода
 
 ```js
 function run() {
@@ -98,6 +98,31 @@ async function run() {
 
 run().catch(console.error);
 ```
+|Параметр|Тип|Описание|
+|-|-|-|
+|coins|Number|Входящее значение коинов|
+#
+getBalance - Получает баланс по айди пользователей
+
+getMyBalance - Получает баланс текущего пользователя
+
+```js
+async function run() {
+    const balances = await vkcoin.getBalance([1, 100, 236908027]);
+    const myBalance = await vkcoin.getMyBalance();
+
+    console.log({ balances, myBalance });
+}
+
+run().catch(console.error);
+```
+
+Среди этих методов аргумент принимает только getBalance:
+
+
+|Параметр|Тип|Описание|
+|-|-|-|
+|userIds|Array<Number>|Массив айди пользователей|
 # Ссылки
 * Мой вк: https://vk.com/fakeman.cat_fmc
 * Беседа: https://vk.me/join/AJQ1d_JeTA/o0GfCxwihS_6E
