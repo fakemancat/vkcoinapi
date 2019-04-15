@@ -210,6 +210,8 @@ module.exports = class VKCoin {
      * Например, приходит значение 1234567890. Этот метод сделает значение таким: 1 234 567,890
      */
     formatCoins(coins) {
+        coins = Number(coins);
+        
         return (coins / 1000)
             .toLocaleString()
             .replace(/,/g, ' ')
