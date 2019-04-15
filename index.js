@@ -1,25 +1,85 @@
+const WebSocket = require('ws');
+
 const random = require('./functions/random');
 const request = require('./functions/request');
+const formatURL = require('./functions/formatURL');
+const getURLbyToken = require('./functions/getURLbyToken');
+
+/**
+ *  Сильно извиняюсь за сущий говнокод в классе Updates. Понимаю, глазам больно...
+ *  Впервые работаю с вебсокетами и realtime в принципе
+ *  В будущем 100% будет рефактор кода, когда я начну больше разбираться в этом :)
+ */
+class Updates {
+    /**
+     * @param {String} token - Токен пользователя 
+     * @param {Number} userId - Айди пользователя 
+     */
+    constructor(token, userId) {
+        this.token = token;
+        this.userId = userId;
+    }
+
+    /**
+     * @description Запуск "прослушки"
+     */
+    async startPolling() {
+        const url = await getURLbyToken(this.token);
+        const wss = formatURL(url, this.userId);
+
+        this.ws = new WebSocket(wss);
+
+        this.ws.onopen = () => {
+            console.log('Polling started');
+        };
+
+        this.ws.onerror = (data) => {
+            console.error(`На стороне VK Coin возникла ошибка: ${data.messsage}`);
+        };
+    }
+
+    /**
+     * @param {Function} callback - Функция обратного вызова 
+     * @description Принимает в себя аргументы amount, fromId, id
+     */
+    onTransfer(callback) {
+        if (!this.ws) return;
+
+        this.ws.onmessage = (data) => {
+            const messsage = data.data;
+            if (!/^(?:TR)/i.test(messsage)) return;
+            
+            const { amount, fromId, id } = messsage.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
+            const event = { amount, fromId, id };
+
+            return callback(event);
+        };
+    }
+}
 
 module.exports = class VKCoin {
     /**
      * @param {Object} options - Опции конструктора
      * @param {String} options.key - API Ключ
      * @param {Number} options.userId - Айди пользователя
+     * @param {String} options.token - Токен пользователя
      */
     constructor(options = {}) {
-        if (!options.key || !options.userId) {
-            throw new Error('Вы не указали ключ или айди в конструкторе');
-        }
+        if (!options.key) throw new Error('Вы не указали ключ');
+        if (!options.userId) throw new Error('Вы не указали айди пользователя');
+        if (!options.token) throw new Error('Вы не указали токен');
 
         this.key = options.key;
+        this.token = options.token;
         this.userId = options.userId;
+
+        this.updates = new Updates(this.token, this.userId);
     }
 
     /**
      * @param {Array<Number>} tx - Массив айди транзакций. Подробнее: https://vk.com/@hs-marchant-api
      */
-    async getTranList(tx = [1]) {
+    async getTransactionList(tx = [1]) {
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/tx/',
             {   
