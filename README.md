@@ -29,6 +29,7 @@ const vkcoin = new VKCOINAPI(options = {});
 |-|-|-|
 |key|String|Ключ для взаимодействия с API|
 |userId|Number|Ваш айди ВК|
+|token|String|Ваш [токен](https://vkhost.github.io) ВК|
 # Методы
 getTransactionList - Получает список ваших транзакций
 
