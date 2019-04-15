@@ -86,6 +86,60 @@ module.exports = class VKCoin {
     }
 
     /**
+     * @param {Array<Number>} userIds - Массив айди пользователей для получения баланса
+     */
+    async getBalance(userIds) {
+        if (!userIds) {
+            throw new Error('В аргумент метода нужно указать массив айди пользователей');
+        }
+
+        if (!(userIds instanceof Array)) {
+            throw new Error('Аргумент <<userIds>> должен быть массивом');
+        }
+
+        const result = await request(
+            'https://coin-without-bugs.vkforms.ru/merchant/score/',
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    key: this.key,
+                    merchantId: this.userId,
+                    userIds
+                },
+                json: true,
+                method: 'POST'
+            }
+        );
+
+        return result;
+    }
+
+    /**
+     * @description Получает баланс текущего пользователя
+     */
+    async getMyBalance() {
+        const result = await request(
+            'https://coin-without-bugs.vkforms.ru/merchant/score/',
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    key: this.key,
+                    merchantId: this.userId,
+                    userIds: [this.userId]
+                },
+                json: true,
+                method: 'POST'
+            }
+        );
+
+        return result.response[this.userId];
+    }
+
+    /**
      * @param {Number} coins - Входящее значение коинов
      * @description Делает получаемое из API значение коинов читабельным
      * Например, приходит значение 1234567890. Этот метод сделает значение таким: 1 234 567,890
