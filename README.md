@@ -16,7 +16,8 @@
 * Перейдите в неё: cd vkcoin
 * Пропишите: git clone https://github.com/fakemancat/vkcoinapi vkcoinapi | cd vkcoinapi | npm i
 # Начало работы
-Для начала использования, вам нужно создать в своей папке исполняемый файл, пусть это будет **index.js**\n
+Для начала использования, вам нужно создать в своей папке исполняемый файл, пусть это будет **index.js**
+
 Теперь его нужно открыть и импортировать библиотеку:
 ```js
 const VKCOINAPI = require('./vkcoinapi');
@@ -62,7 +63,7 @@ run().catch(console.error);
 |toId|Number|Айди получателя|
 |amount|Number|Сумма перевода|
 #
-getLink - получет ссылку для перевода
+getLink - получает ссылку для перевода
 
 ```js
 function run() {
@@ -78,6 +79,25 @@ run().catch(console.error);
 |-|-|-|
 |amount|Number|Сумма перевода|
 |fixation|Boolean|Фиксированная сумма или нет|
+#
+formatCoins - Делает получаемое из API значение коинов читабельным. Например, приходит значение 1234567890. Этот метод сделает значение таким: 1 234 567,890
+
+Это можно использовать в паре с другим методом:
+```js
+async function run() {
+    const trans = await vkcoin.getTranList([2]);
+
+    const fixTrans = trans.response.map((tran) => {
+        tran.amount = vkcoin.formatCoins(tran.amount);
+
+        return tran;
+    });
+
+    console.log(fixTrans);
+}
+
+run().catch(console.error);
+```
 # Ссылки
 * Мой вк: https://vk.com/fakeman.cat_fmc
 * Беседа: https://vk.me/join/AJQ1d_JeTA/o0GfCxwihS_6E
