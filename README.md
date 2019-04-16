@@ -16,22 +16,21 @@
 ### Windows:
 * Скачайте и установите последнюю версию [Node.JS](https://nodejs.org/en/download/)
 * Создайте в удобном месте папку, например **vkcoin**
-* Скачайте [репозиторий](https://github.com/fakemancat/vkcoinapi/archive/master.zip)
-* Распакуйте папку vkcoinapi-master в папку **(путь до вашей папки)\vkcoinapi**, например: **C:\Users\fakemancat\vkcoin\vkcoinapi**
 * Перейдите в командную строку: Win + R > cmd
-* Перейдите в папку: **cd (путь до вашей папки)\vkcoinapi**
-* Пропишите: npm i
+* Перейдите в папку: **cd (путь до вашей папки)**
+* Пропишите: npm i vkcoinapi
 
 ### Ubuntu:
 * Установите Node.JS по [этому](https://www.digitalocean.com/community/tutorials/node-js-ubuntu-16-04-ru) гайду
-* Создайте в удобном месте папку **vkcoinapi**: mkdir vkcoinapi
-* Пропишите не заходя в новую папку: git clone https://github.com/fakemancat/vkcoinapi vkcoinapi | cd vkcoinapi | npm i
+* Создайте в удобном месте папку, например **vkcoin**
+* Перейдите в папку: **cd (путь до вашей папки)**
+* Пропишите: npm i vkcoinapi
 # Начало работы
 Для начала использования, вам нужно создать в своей папке исполняемый файл, пусть это будет **index.js**
 
 Теперь его нужно открыть и импортировать библиотеку:
 ```js
-const VKCOINAPI = require('./vkcoinapi');
+const VKCOINAPI = require('vkcoinapi');
 
 const vkcoin = new VKCOINAPI(options = {});
 ```
