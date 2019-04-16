@@ -1,5 +1,17 @@
 # vkcoinapi
 Работа с API VK Coin
+### Особенности:
+* Реализованы все методы официального API
+* Удобная документация и хорошая тех. поддержка
+* Возможность получения платежей в режиме реального времени
+* Активные обновления 
+* Не тянет за собой много библиотек
+* Есть своя беседа для обсуждения обновлений/багов
+
+### Планы:
+* Сделать WebHooks
+* Сделать гайды по установке и использованию на YouTube
+* Сделать папку с примерами
 # Установка
 ### Windows:
 * Скачайте и установите последнюю версию [Node.JS](https://nodejs.org/en/download/)
@@ -28,6 +40,23 @@ const vkcoin = new VKCOINAPI(options = {});
 |-|-|-|
 |key|String|Ключ для взаимодействия с API|
 |userId|Number|Ваш айди ВК|
+|token|String|Ваш токен|
+
+### Где взять эти значения
+* Получение ключа (key): [описано в начале этой статьи](https://vk.com/@hs-marchant-api)
+* Получение айди вк (userId):
+
+Откройте свою аватарку и в адресной строке вы увидите подобное: **https://vk.com/fakeman.cat_fmc?z=photo236908027_456259706%2Falbum236908027_0%2Frev**
+
+Вашим айди будет являться число после слова **photo**. В этом случае **236908027**
+
+* Получение токена (token):
+
+Откройте [эту](https://oauth.vk.com/authorize?client_id=6378721&scope=1073737727&redirect_uri=https://api.vk.com/blank.html&display=page&response_type=token&revoke=1) ссылку и нажмите разрешить
+
+После этого в адресной строке будет подобное: **https://api.vk.com/blank.html#access_token=xxxxxxxxxxxx&expires_in=0&user_id=user_id&email=email**
+
+Токеном будет являться строка от **access_token** до **&expires**. В этом случае **xxxxxxxxxxxx**
 # Методы
 getTransactionList - Получает список ваших транзакций
 
