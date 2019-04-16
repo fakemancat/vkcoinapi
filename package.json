@@ -1,5 +1,5 @@
 {
-    "name": "vkcoin",
+    "name": "vkcoinapi",
     "version": "1.1.2",
     "description": "Работа с API VK Coin",
     "main": "index.js",
