@@ -13,7 +13,7 @@ const getURLbyToken = require('./functions/getURLbyToken');
 class Updates {
     /**
      * @param {String} token - Токен пользователя 
-     * @param {Number} userId - Айди пользователя 
+     * @param {Number} userId - ID пользователя 
      */
     constructor(token, userId) {
         this.token = token;
@@ -34,7 +34,7 @@ class Updates {
         };
 
         this.ws.onerror = (data) => {
-            console.error(`На стороне VK Coin возникла ошибка: ${data.messsage}`);
+            console.error(`На стороне VK Coin возникла ошибка: ${data.message}`);
         };
     }
 
@@ -46,10 +46,10 @@ class Updates {
         if (!this.ws) return;
 
         this.ws.onmessage = (data) => {
-            const messsage = data.data;
-            if (!/^(?:TR)/i.test(messsage)) return;
+            const message = data.data;
+            if (!/^(?:TR)/i.test(message)) return;
             
-            let { amount, fromId, id } = messsage.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
+            let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
             
             amount = Number(amount);
             fromId = Number(fromId);
@@ -66,12 +66,12 @@ module.exports = class VKCoin {
     /**
      * @param {Object} options - Опции конструктора
      * @param {String} options.key - API Ключ
-     * @param {Number} options.userId - Айди пользователя
+     * @param {Number} options.userId - ID пользователя
      * @param {String} options.token - Токен пользователя
      */
     constructor(options = {}) {
         if (!options.key) throw new Error('Вы не указали ключ');
-        if (!options.userId) throw new Error('Вы не указали айди пользователя');
+        if (!options.userId) throw new Error('Вы не указали ID пользователя');
         if (!options.token) throw new Error('Вы не указали токен');
 
         this.key = options.key;
@@ -82,7 +82,7 @@ module.exports = class VKCoin {
     }
 
     /**
-     * @param {Array<Number>} tx - Массив айди транзакций. Подробнее: https://vk.com/@hs-marchant-api
+     * @param {Array<Number>} tx - Массив ID транзакций. Подробнее: https://vk.com/@hs-marchant-api
      */
     async getTransactionList(tx = [1]) {
         const result = await request(
@@ -105,12 +105,12 @@ module.exports = class VKCoin {
     }
 
     /**
-     * @param {Number} toUserId - Айди получателя 
+     * @param {Number} toUserId - ID получателя 
      * @param {Number} amount - Количество коинов 
      */
     async sendPayment(toId, amount) {
         if (typeof toId !== 'number') {
-            throw new Error('Айди должно быть числом');
+            throw new Error('ID должно быть числом');
         }
 
         if (typeof amount !== 'number') {
@@ -151,15 +151,15 @@ module.exports = class VKCoin {
     }
 
     /**
-     * @param {Array<Number>} userIds - Массив айди пользователей для получения баланса
+     * @param {Array<Number>} userIds - Массив ID пользователей для получения баланса
      */
     async getBalance(userIds) {
         if (!userIds) {
-            throw new Error('В аргумент метода нужно указать массив айди пользователей');
+            throw new Error('В аргумент метода нужно указать массив ID пользователей');
         }
 
         if (!(userIds instanceof Array)) {
-            throw new Error('Аргумент <<userIds>> должен быть массивом');
+            throw new Error('Аргумент `userIds` должен быть массивом');
         }
 
         const result = await request(
