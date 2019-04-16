@@ -1,7 +1,7 @@
 # vkcoinapi
 Работа с API VK Coin
 # Установка
-### Windowns:
+### Windows:
 * Скачайте и установите последнюю версию [Node.JS](https://nodejs.org/en/download/)
 * Создайте в удобном месте папку, например **vkcoin**
 * Скачайте [репозиторий](https://github.com/fakemancat/vkcoinapi/archive/master.zip)
@@ -12,9 +12,8 @@
 
 ### Ubuntu:
 * Установите Node.JS по [этому](https://www.digitalocean.com/community/tutorials/node-js-ubuntu-16-04-ru) гайду
-* Создайте в удобном месте папку, например **vkcoin**: mkdir vkcoin
-* Перейдите в неё: cd vkcoin
-* Пропишите: git clone https://github.com/fakemancat/vkcoinapi vkcoinapi | cd vkcoinapi | npm i
+* Создайте в удобном месте папку **vkcoinapi**: mkdir vkcoinapi
+* Пропишите не заходя в новую папку: git clone https://github.com/fakemancat/vkcoinapi vkcoinapi | cd vkcoinapi | npm i
 # Начало работы
 Для начала использования, вам нужно создать в своей папке исполняемый файл, пусть это будет **index.js**
 
@@ -162,5 +161,5 @@ event - Объект, который хранит в себе информаци
 |fromId|Number|Айди плательщика|
 |id|Number|Айди платежа|
 # Ссылки
-* Мой вк: https://vk.com/fakeman.cat_fmc
-* Беседа: https://vk.me/join/AJQ1d_JeTA/o0GfCxwihS_6E
+* [Моя ссылка VK](https://vk.com/fakeman.cat_fmc)
+* [Беседа](https://vk.me/join/AJQ1d_JeTA/o0GfCxwihS_6E)
