@@ -1,4 +1,4 @@
-const VKCOINAPI = require('vkcoinapi'); // Импорт модуля
+const VKCOINAPI = require('node-vkcoinapi'); // Импорт модуля
 const vkcoin = new VKCOINAPI({
     key: 'Тут ключ',
     userId: 123, // Тут ваш ID вк
