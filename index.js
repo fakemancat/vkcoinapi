@@ -282,6 +282,35 @@ module.exports = class VKCoin {
     }
 
     /**
+     * @param {String} name - Название вашего магазина
+     * @description Изменяет название вашего магазина
+     * @returns {Promise<{ response: {} }>}
+     */
+    async setShopName(name) {
+        if (!name) {
+            throw new Error('Вы не указали новое имя магазина');
+        }
+
+        const result = await request(
+            'https://coin-without-bugs.vkforms.ru/merchant/set/',
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    name,
+                    key: this.key,
+                    merchantId: this.userId,
+                },
+                json: true,
+                method: 'POST'
+            }
+        );
+
+        return result;
+    }
+
+    /**
      * @param {Number} coins - Входящее значение коинов
      * @description
      * Делает получаемое из API значение коинов читабельным
