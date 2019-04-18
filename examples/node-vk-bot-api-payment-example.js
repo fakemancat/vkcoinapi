@@ -6,7 +6,7 @@ const vkcoin = new VKCOINAPI({
 });
 
 const VK = require('node-vk-bot-api'); // Импорт модуля для бота
-const bot = new VK(); // Новый экземпляр
+const bot = new VK('Тут токен бота (группы)'); // Новый экземпляр
 
 bot.use((ctx, next) => { // Прослушка для каждого события
     if (ctx.message.from_id < 0) return; // Если от ботов, то ничего не делаем
