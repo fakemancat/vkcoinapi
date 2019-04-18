@@ -105,7 +105,7 @@ module.exports = class VKCoin {
     }
 
     /**
-     * @param {Number} toUserId - ID получателя 
+     * @param {Number} toId - ID получателя 
      * @param {Number} amount - Количество коинов 
      */
     async sendPayment(toId, amount) {
