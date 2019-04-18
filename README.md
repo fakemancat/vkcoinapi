@@ -73,11 +73,11 @@ run().catch(console.error);
 |-|-|-|
 |tx|Array<Number>|Массив айди переводов для получения ИЛИ [1] - последняя 1000 транзакций, [2] - 100|
 #
-sendPayment - Делает перевод другому пользователю
+sendPayment - Делает перевод другому пользователю (в десятичных долях)
 
 ```js
 async function run() {
-    const result = await vkcoin.sendPayment(toId, amount);
+    const result = await vkcoin.sendPayment(toId, amount); // 1 коин = 1000 ед.
     
     console.log(result);
 }
