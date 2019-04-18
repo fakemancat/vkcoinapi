@@ -1,5 +1,8 @@
 const WebSocket = require('ws');
 
+const koa = require('koa');
+const koaBody = require('koa-body');
+
 const random = require('./functions/random');
 const request = require('./functions/request');
 const formatURL = require('./functions/formatURL');
@@ -15,7 +18,8 @@ class Updates {
      * @param {String} token - Токен пользователя 
      * @param {Number} userId - ID пользователя 
      */
-    constructor(token, userId) {
+    constructor(key, token, userId) {
+        this.key = key;
         this.token = token;
         this.userId = userId;
     }
@@ -24,14 +28,16 @@ class Updates {
      * @async
      * @description Запуск "прослушки"
      */
-    async startPolling() {
+    async startPolling(callback) {
         const url = await getURLbyToken(this.token);
         const wss = formatURL(url, this.userId);
 
         this.ws = new WebSocket(wss);
 
-        this.ws.onopen = () => {
-            console.log('Polling started');
+        this.ws.onopen = (data) => {
+            if (callback) {
+                callback(data);
+            }
         };
 
         this.ws.onerror = (data) => {
@@ -40,27 +46,79 @@ class Updates {
     }
 
     /**
+     * @param {Object} options - Опции WebHook
+     * @param {String} options.url - Адрес для получения событий
+     * @param {Number} options.port - Порт для создания сервера
+     */
+    async startWebHook(options = {}) {
+        let { url, port } = options;
+
+        if (!url) {
+            throw new Error('Вы не указали адрес для получения событий (url)');
+        }
+
+        if (!port) options.port = 8181;
+
+        this.app = new koa();
+        this.app.use(koaBody());
+        this.app.listen(port);
+
+        if (!/^(?:https?)/.test(url)) {
+            url = `http://${url}`;
+        }
+
+        const result = await request(
+            'https://coin-without-bugs.vkforms.ru/merchant/set/',
+            {   
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    callback: `${url}:${port}`,
+                    key: this.key,
+                    merchantId: this.userId
+                },
+                json: true,
+                method: 'POST'
+            }
+        );
+
+        if (result.response === 'ON') {
+            return true;
+        }
+        else {
+            throw new Error(`Не получилось зарегистрировать Callback: ${result}`);
+        }
+    }
+
+    /**
      * @param {Function} callback - Функция обратного вызова 
      * @returns {{ amount: Number, fromId: Number, id: Number }}
      * Объект с ключами amount - сумма, fromId - отправитель и id - ID транзакции
      */
     onTransfer(callback) {
-        if (!this.ws) return;
+        if (this.ws) {
+            this.ws.onmessage = (data) => {
+                const message = data.data;
+                if (!/^(?:TR)/i.test(message)) return;
+                
+                let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
+                
+                amount = Number(amount);
+                fromId = Number(fromId);
+                id = Number(id);
 
-        this.ws.onmessage = (data) => {
-            const message = data.data;
-            if (!/^(?:TR)/i.test(message)) return;
-            
-            let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
-            
-            amount = Number(amount);
-            fromId = Number(fromId);
-            id = Number(id);
+                const event = { amount, fromId, id };
 
-            const event = { amount, fromId, id };
+                return callback(event);
+            };
+        } else if (this.app) {
+            this.app.use((ctx) => {
+                ctx.status = 200;
 
-            return callback(event);
-        };
+                callback(ctx.request.body);
+            });
+        }
     }
 }
 
@@ -80,7 +138,7 @@ module.exports = class VKCoin {
         this.token = options.token;
         this.userId = options.userId;
 
-        this.updates = new Updates(this.token, this.userId);
+        this.updates = new Updates(this.key, this.token, this.userId);
     }
 
     /**
