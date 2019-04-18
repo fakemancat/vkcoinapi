@@ -21,6 +21,7 @@ class Updates {
     }
 
     /**
+     * @async
      * @description Запуск "прослушки"
      */
     async startPolling() {
@@ -40,7 +41,8 @@ class Updates {
 
     /**
      * @param {Function} callback - Функция обратного вызова 
-     * @description Принимает в себя аргументы amount, fromId, id
+     * @returns {{ amount: Number, fromId: Number, id: Number }}
+     * Объект с ключами amount - сумма, fromId - отправитель и id - ID транзакции
      */
     onTransfer(callback) {
         if (!this.ws) return;
@@ -64,8 +66,8 @@ class Updates {
 
 module.exports = class VKCoin {
     /**
-     * @param {Object} options - Опции конструктора
-     * @param {String} options.key - API Ключ
+     * @param {Object} options - Опции класса
+     * @param {String} options.key - API-ключ
      * @param {Number} options.userId - ID пользователя
      * @param {String} options.token - Токен пользователя
      */
@@ -82,7 +84,10 @@ module.exports = class VKCoin {
     }
 
     /**
+     * @async
      * @param {Array<Number>} tx - Массив ID транзакций. Подробнее: https://vk.com/@hs-marchant-api
+     * @returns {Promise<[{ id: Number, from_id: Number, to_id: Number, amount: String, type: Number, payload: Number, external_id: Number, created_at: Number }]>}
+     * Массив с транзакциями
      */
     async getTransactionList(tx = [1]) {
         const result = await request(
@@ -105,8 +110,15 @@ module.exports = class VKCoin {
     }
 
     /**
-     * @param {Number} toUserId - ID получателя 
+     * @async
+     * @param {Number} toId - ID получателя 
      * @param {Number} amount - Количество коинов 
+     * @property {Object} response - Возвращаемый объект
+     * @property {Number} response.id - ID транзакции
+     * @property {Number} response.amount - Количество коинов
+     * @property {Number} response.current - Текущее количество коинов
+     * @returns {Promise<{ response: { id: Number, amount: Number, current: Number } }>}
+     * Объект с ключами id, amount, current
      */
     async sendPayment(toId, amount) {
         if (typeof toId !== 'number') {
@@ -140,6 +152,7 @@ module.exports = class VKCoin {
     /**
      * @param {Number} amount - Количество коинов для получения
      * @param {Boolean} fixation - Фиксированная сумма или нет
+     * @returns {String} - Ссылка на перевод
      */
     getLink(amount, fixation) {
         if (typeof amount !== 'number') {
@@ -151,7 +164,11 @@ module.exports = class VKCoin {
     }
 
     /**
+     * @async
      * @param {Array<Number>} userIds - Массив ID пользователей для получения баланса
+     * @property {Object} response - Возвращаемый объект
+     * @returns {Promise<{ response: {} }>}
+     * Объект с ID пользователей и их балансами
      */
     async getBalance(userIds) {
         if (!userIds) {
@@ -182,7 +199,9 @@ module.exports = class VKCoin {
     }
 
     /**
-     * @description Получает баланс текущего пользователя
+     * @async
+     * @description - Получает баланс текущего пользователя
+     * @returns {Number} - Текущий баланс
      */
     async getMyBalance() {
         const result = await request(
@@ -206,8 +225,10 @@ module.exports = class VKCoin {
 
     /**
      * @param {Number} coins - Входящее значение коинов
-     * @description Делает получаемое из API значение коинов читабельным
+     * @description
+     * Делает получаемое из API значение коинов читабельным
      * Например, приходит значение 1234567890. Этот метод сделает значение таким: 1 234 567,890
+     * @returns {String} - Отформатированная строка
      */
     formatCoins(coins) {
         coins = Number(coins);
