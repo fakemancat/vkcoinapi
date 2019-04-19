@@ -46,9 +46,11 @@ class Updates {
     }
 
     /**
+     * @async
      * @param {Object} options - Опции WebHook
      * @param {String} options.url - Адрес для получения событий
      * @param {Number} options.port - Порт для создания сервера
+     * @returns {Boolean} - true, если всё прошло успешно
      */
     async startWebHook(options = {}) {
         let { url, port } = options;
