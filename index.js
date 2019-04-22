@@ -102,7 +102,7 @@ class Updates {
      * @returns {Boolean}
      */
     async reconnect() {
-        await this.startPolling(hasCallback ? console.log : null);
+        await this.startPolling(this.hasCallback ? console.log : null);
 
         return true;
     }
