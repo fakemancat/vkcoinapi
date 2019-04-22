@@ -22,6 +22,12 @@ class Updates {
         this.key = key;
         this.token = token;
         this.userId = userId;
+
+        this.url = null;
+        this.wss = null;
+        this.reconnectTimeout = 5000;
+
+        this.isStarted = false;
     }
 
     /**
@@ -29,20 +35,71 @@ class Updates {
      * @description Запуск "прослушки"
      */
     async startPolling(callback) {
-        const url = await getURLbyToken(this.token);
-        const wss = formatURL(url, this.userId);
+        this.isStarted = true;
 
-        this.ws = new WebSocket(wss);
+        this.url = await getURLbyToken(this.token);
+        this.wss = formatURL(this.url, this.userId);
 
-        this.ws.onopen = (data) => {
-            if (callback) {
-                callback(data);
+        this.ws = new WebSocket(this.wss);
+
+        this.ws.on('open', () => {
+            if (callback) callback(true);
+        });
+
+        this.ws.on('error', (data) => {
+            console.error(
+                `На стороне VK Coin возникла ошибка: ${data.message}\n\nПереподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+            );
+
+            setTimeout(() => {
+                this.reconnect();
+            }, this.reconnectTimeout);
+        });
+
+        this.ws.on('message', (message) => {
+            if (/^(?:TR)/i.test(message)) {
+                let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
+            
+                amount = Number(amount);
+                fromId = Number(fromId);
+                id = Number(id);
+
+                const event = { amount, fromId, id };
+
+                this.transferHandler(event);
             }
-        };
 
-        this.ws.onerror = (data) => {
-            console.error(`На стороне VK Coin возникла ошибка: ${data.message}`);
-        };
+            if (message === 'ALREADY_CONNECTED') {
+                callback(
+                    `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+                );
+
+                setTimeout(() => {
+                    this.reconnect();
+                }, this.reconnectTimeout);
+            }
+        });
+
+        this.ws.on('close', () => {
+            callback(
+                `Сервер закрыл подключение, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+            );
+
+            setTimeout(() => {
+                this.reconnect();
+            }, this.reconnectTimeout);
+        });
+    }
+
+    /**
+     * @async
+     * @description - Перезапускает подключение к серверу
+     * @returns {Boolean}
+     */
+    async reconnect() {
+        await this.startPolling();
+
+        return true;
     }
 
     /**
@@ -50,7 +107,7 @@ class Updates {
      * @param {Object} options - Опции WebHook
      * @param {String} options.url - Адрес для получения событий
      * @param {Number} options.port - Порт для создания сервера
-     * @returns {Boolean} - true, если всё прошло успешно
+     * @returns {Boolean} - true, если запуск успешен
      */
     async startWebHook(options = {}) {
         let { url, port } = options;
@@ -64,6 +121,7 @@ class Updates {
         this.app = new koa();
         this.app.use(koaBody());
         this.app.listen(port);
+        this.isStarted = true;
 
         if (!/^(?:https?)/.test(url)) {
             url = `http://${url}`;
@@ -86,6 +144,12 @@ class Updates {
         );
 
         if (result.response === 'ON') {
+            this.app.use((ctx) => {
+                ctx.status = 200;
+
+                this.transferHandler(ctx.request.body);
+            });
+
             return true;
         }
         else {
@@ -99,28 +163,8 @@ class Updates {
      * Объект с ключами amount - сумма, fromId - отправитель и id - ID транзакции
      */
     onTransfer(callback) {
-        if (this.ws) {
-            this.ws.onmessage = (data) => {
-                const message = data.data;
-                if (!/^(?:TR)/i.test(message)) return;
-                
-                let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
-                
-                amount = Number(amount);
-                fromId = Number(fromId);
-                id = Number(id);
-
-                const event = { amount, fromId, id };
-
-                return callback(event);
-            };
-        } else if (this.app) {
-            this.app.use((ctx) => {
-                ctx.status = 200;
-
-                callback(ctx.request.body);
-            });
-        }
+        if (!this.isStarted) return;
+        this.transferHandler = callback;
     }
 }
 
