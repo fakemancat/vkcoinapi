@@ -70,9 +70,11 @@ class Updates {
             }
 
             if (message === 'ALREADY_CONNECTED') {
-                callback(
-                    `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
-                );
+                if (callback) {
+                    callback(
+                        `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+                    );
+                }
 
                 setTimeout(() => {
                     this.reconnect();
@@ -81,9 +83,11 @@ class Updates {
         });
 
         this.ws.on('close', () => {
-            callback(
-                `Сервер закрыл подключение, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
-            );
+            if (callback) {
+                callback(
+                    `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+                );
+            }
 
             setTimeout(() => {
                 this.reconnect();
