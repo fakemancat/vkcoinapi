@@ -28,6 +28,7 @@ class Updates {
         this.reconnectTimeout = 5000;
 
         this.isStarted = false;
+        this.hasCallback = false;
     }
 
     /**
@@ -35,6 +36,10 @@ class Updates {
      * @description Запуск "прослушки"
      */
     async startPolling(callback) {
+        if (callback) {
+            this.hasCallback = true;
+        }
+
         this.isStarted = true;
 
         this.url = await getURLbyToken(this.token);
@@ -43,7 +48,7 @@ class Updates {
         this.ws = new WebSocket(this.wss);
 
         this.ws.on('open', () => {
-            if (callback) callback(true);
+            if (callback) callback('Подключено');
         });
 
         this.ws.on('error', (data) => {
@@ -75,19 +80,15 @@ class Updates {
                         `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
                     );
                 }
-
-                setTimeout(() => {
-                    this.reconnect();
-                }, this.reconnectTimeout);
             }
         });
 
         this.ws.on('close', () => {
             if (callback) {
-                callback(
-                    `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
-                );
-            }
+                    callback(
+                        `Соединение разорвано`
+                    );
+                }
 
             setTimeout(() => {
                 this.reconnect();
@@ -101,7 +102,7 @@ class Updates {
      * @returns {Boolean}
      */
     async reconnect() {
-        await this.startPolling();
+        await this.startPolling(hasCallback ? console.log : null);
 
         return true;
     }
