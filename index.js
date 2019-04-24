@@ -19,16 +19,26 @@ class Updates {
      * @param {Number} userId - ID пользователя 
      */
     constructor(key, token, userId) {
+        // Конфигурация
         this.key = key;
         this.token = token;
         this.userId = userId;
 
+        // Сервер
         this.url = null;
         this.wss = null;
         this.reconnectTimeout = 5000;
 
         this.isStarted = false;
         this.hasCallback = false;
+        this.callbackMethod = null;
+
+        // Информация
+        this.place = null;
+        this.digits = null;
+        this.online = null;
+        this.userTop = null;
+        this.groupTop = null;
     }
 
     /**
@@ -38,6 +48,7 @@ class Updates {
     async startPolling(callback) {
         if (callback) {
             this.hasCallback = true;
+            this.callbackMethod = callback;
         }
 
         this.isStarted = true;
@@ -62,6 +73,16 @@ class Updates {
         });
 
         this.ws.on('message', (message) => {
+            const jsonMessage = JSON.parse(message);
+            
+            if (jsonMessage.type === 'INIT') {
+                this.place = jsonMessage.place;
+                this.digits = jsonMessage.digits;
+                this.online = jsonMessage.top.online;
+                this.userTop = jsonMessage.top.userTop;
+                this.groupTop = jsonMessage.top.groupTop;
+            }
+
             if (/^(?:TR)/i.test(message)) {
                 let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
             
@@ -85,10 +106,8 @@ class Updates {
 
         this.ws.on('close', () => {
             if (callback) {
-                    callback(
-                        `Соединение разорвано`
-                    );
-                }
+                callback('Соединение разорвано');
+            }
 
             setTimeout(() => {
                 this.reconnect();
@@ -102,7 +121,7 @@ class Updates {
      * @returns {Boolean}
      */
     async reconnect() {
-        await this.startPolling(this.hasCallback ? console.log : null);
+        await this.startPolling(this.hasCallback ? this.callbackMethod : null);
 
         return true;
     }
@@ -114,7 +133,7 @@ class Updates {
      * @param {Number} options.port - Порт для создания сервера
      * @returns {Boolean} - true, если запуск успешен
      */
-    async startWebHook(options = {}) {
+    async startWebHook(options) {
         let { url, port } = options;
 
         if (!url) {
@@ -180,7 +199,7 @@ module.exports = class VKCoin {
      * @param {Number} options.userId - ID пользователя
      * @param {String} options.token - Токен пользователя
      */
-    constructor(options = {}) {
+    constructor(options) {
         if (!options.key) throw new Error('Вы не указали ключ');
         if (!options.userId) throw new Error('Вы не указали ID пользователя');
         if (!options.token) throw new Error('Вы не указали токен');
@@ -198,7 +217,7 @@ module.exports = class VKCoin {
      * @returns {Promise<[{ id: Number, from_id: Number, to_id: Number, amount: String, type: Number, payload: Number, external_id: Number, created_at: Number }]>}
      * Массив с транзакциями
      */
-    async getTransactionList(tx = [1]) {
+    async getTransactionList(tx = [2]) {
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/tx/',
             {   
@@ -284,7 +303,7 @@ module.exports = class VKCoin {
             throw new Error('В аргумент метода нужно указать массив ID пользователей');
         }
 
-        if (!(userIds instanceof Array)) {
+        if (!Array.isArray(userIds)) {
             throw new Error('Аргумент `userIds` должен быть массивом');
         }
 
@@ -313,21 +332,7 @@ module.exports = class VKCoin {
      * @returns {Number} - Текущий баланс
      */
     async getMyBalance() {
-        const result = await request(
-            'https://coin-without-bugs.vkforms.ru/merchant/score/',
-            {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    key: this.key,
-                    merchantId: this.userId,
-                    userIds: [this.userId]
-                },
-                json: true,
-                method: 'POST'
-            }
-        );
+        const result = await this.getBalance([this.userId]);
 
         return result.response[this.userId];
     }
