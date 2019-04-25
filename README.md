@@ -1,5 +1,11 @@
 # vkcoinapi
-Работа с API VK Coin
+Модуль для работы с API VK Coin
+
+[![npm package](https://nodei.co/npm/node-vkcoinapi.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/node-vkcoinapi/)
+<p>
+<a href="https://www.npmjs.com/package/node-vkcoinapi"><img src="https://img.shields.io/npm/v/node-vkcoinapi.svg" alt="Version"></a>
+<a href="https://www.npmjs.com/package/node-vkcoinapi"><img src="https://img.shields.io/npm/dt/node-vkcoinapi.svg" alt="Downloads"></a>
+</p>
 ### Особенности:
 * Реализованы все методы официального API
 * Удобная документация и хорошая тех. поддержка
@@ -56,12 +62,12 @@ const vkcoin = new VKCOINAPI(options = {});
 После этого в адресной строке будет подобное: **https://api.vk.com/blank.html#access_token=xxxxxxxxxxxx&expires_in=0&user_id=user_id&email=email**
 
 Токеном будет являться строка от **access_token** до **&expires**. В этом случае **xxxxxxxxxxxx**
-# Методы
+# API
 getTransactionList - Получает список ваших транзакций
 
 ```js
 async function run() {
-    const result = await vkcoin.getTransactionList(tx);
+    const result = await vkcoin.api.getTransactionList(tx);
     
     console.log(result);
 }
@@ -77,7 +83,7 @@ sendPayment - Делает перевод другому пользовател�
 
 ```js
 async function run() {
-    const result = await vkcoin.sendPayment(toId, amount); // 1 коин = 1000 ед.
+    const result = await vkcoin.api.sendPayment(toId, amount); // 1 коин = 1000 ед.
     
     console.log(result);
 }
@@ -94,7 +100,7 @@ getLink - Получает ссылку для перевода
 
 ```js
 function run() {
-    const link = vkcoin.getLink(amount, fixation);
+    const link = vkcoin.api.getLink(amount, fixation);
     
     console.log(link);
 }
@@ -112,10 +118,10 @@ formatCoins - Делает получаемое из API значение кои
 Это можно использовать в паре с другим методом:
 ```js
 async function run() {
-    const trans = await vkcoin.getTransactionList([2]);
+    const trans = await vkcoin.api.getTransactionList([2]);
 
     const fixTrans = trans.response.map((tran) => {
-        tran.amount = vkcoin.formatCoins(tran.amount);
+        tran.amount = vkcoin.api.formatCoins(tran.amount);
 
         return tran;
     });
@@ -135,8 +141,8 @@ getMyBalance - Получает баланс текущего пользоват
 
 ```js
 async function run() {
-    const balances = await vkcoin.getBalance([1, 100, 236908027]);
-    const myBalance = await vkcoin.getMyBalance();
+    const balances = await vkcoin.api.getBalance([1, 100, 236908027]);
+    const myBalance = await vkcoin.api.getMyBalance();
 
     console.log({ balances, myBalance });
 }
@@ -155,7 +161,7 @@ setShopName - Меняет название магазина
 
 ```js
 async function run() {
-    const result = await vkcoin.setShopName(name);
+    const result = await vkcoin.api.setShopName(name);
     
     console.log(result);
 }

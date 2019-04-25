@@ -3,10 +3,13 @@ const WebSocket = require('ws');
 const koa = require('koa');
 const koaBody = require('koa-body');
 
-const random = require('./functions/random');
-const request = require('./functions/request');
-const formatURL = require('./functions/formatURL');
-const getURLbyToken = require('./functions/getURLbyToken');
+const { APIError, ParameterError } = require('./utils/errors');
+
+const isJSON = require('./utils/isJSON');
+const random = require('./utils/random');
+const request = require('./utils/request');
+const formatURL = require('./utils/formatURL');
+const getURLbyToken = require('./utils/getURLbyToken');
 
 /**
  *  Сильно извиняюсь за сущий говнокод в классе Updates. Понимаю, глазам больно...
@@ -15,6 +18,7 @@ const getURLbyToken = require('./functions/getURLbyToken');
  */
 class Updates {
     /**
+     * @param {String} key - API-ключ
      * @param {String} token - Токен пользователя 
      * @param {Number} userId - ID пользователя 
      */
@@ -71,23 +75,18 @@ class Updates {
                 this.reconnect();
             }, this.reconnectTimeout);
         });
-        
-        let isJSON;
 
         this.ws.on('message', (message) => {
-            try {
-                message = JSON.parse(message);
-                isJSON = true;
-            } catch(error) {
-                isJSON = false;
-            }
+            if (isJSON(message)) {
+                const jsonMessage = JSON.parse(message);
 
-            if (isJSON && message.type === 'INIT') {
-                this.place = jsonMessage.place;
-                this.digits = jsonMessage.digits;
-                this.online = jsonMessage.top.online;
-                this.userTop = jsonMessage.top.userTop;
-                this.groupTop = jsonMessage.top.groupTop;
+                if (jsonMessage.type === 'INIT') {
+                    this.place = jsonMessage.place;
+                    this.digits = jsonMessage.digits;
+                    this.online = jsonMessage.top.online;
+                    this.userTop = jsonMessage.top.userTop;
+                    this.groupTop = jsonMessage.top.groupTop;
+                }
             }
 
             if (/^(?:TR)/i.test(message)) {
@@ -144,7 +143,7 @@ class Updates {
         let { url, port } = options;
 
         if (!url) {
-            throw new Error('Вы не указали адрес для получения событий (url)');
+            return new ParameterError('url');
         }
 
         if (!port) options.port = 8181;
@@ -160,17 +159,10 @@ class Updates {
 
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/set/',
-            {   
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    callback: `${url}:${port}`,
-                    key: this.key,
-                    merchantId: this.userId
-                },
-                json: true,
-                method: 'POST'
+            {
+                callback: `${url}:${port}`,
+                key: this.key,
+                merchantId: this.userId
             }
         );
 
@@ -184,7 +176,7 @@ class Updates {
             return true;
         }
         else {
-            throw new Error(`Не получилось зарегистрировать Callback: ${result}`);
+            return new Error(`Не получилось зарегистрировать Callback: ${result}`);
         }
     }
 
@@ -199,48 +191,39 @@ class Updates {
     }
 }
 
-module.exports = class VKCoin {
+class API {
     /**
-     * @param {Object} options - Опции класса
-     * @param {String} options.key - API-ключ
-     * @param {Number} options.userId - ID пользователя
-     * @param {String} options.token - Токен пользователя
+     * @param {Number} key - API-ключ
+     * @param {String} userId - ID пользователя
      */
-    constructor(options) {
-        if (!options.key) throw new Error('Вы не указали ключ');
-        if (!options.userId) throw new Error('Вы не указали ID пользователя');
-        if (!options.token) throw new Error('Вы не указали токен');
-
-        this.key = options.key;
-        this.token = options.token;
-        this.userId = options.userId;
-
-        this.updates = new Updates(this.key, this.token, this.userId);
+    constructor(key, userId) {
+        this.key = key;
+        this.userId = userId;
     }
 
     /**
      * @async
-     * @param {Array<Number>} tx - Массив ID транзакций. Подробнее: https://vk.com/@hs-marchant-api
+     * @param {Array<Number>} tx - Массив ID транзакций. Подробнее: https://vk.cc/9ka9QS
      * @returns {Promise<[{ id: Number, from_id: Number, to_id: Number, amount: String, type: Number, payload: Number, external_id: Number, created_at: Number }]>}
      * Массив с транзакциями
      */
     async getTransactionList(tx = [2]) {
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/tx/',
-            {   
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    tx,
-                    key: this.key,
-                    merchantId: this.userId
-                },
-                json: true,
-                method: 'POST'
+            {
+                tx,
+                key: this.key,
+                merchantId: this.userId
             }
         );
-
+        
+        if (result.error) {
+            const { code, message } = result.error;
+            throw new APIError({
+                code, message
+            });
+        }
+        
         return result;
     }
 
@@ -257,29 +240,29 @@ module.exports = class VKCoin {
      */
     async sendPayment(toId, amount) {
         if (typeof toId !== 'number') {
-            throw new Error('ID должно быть числом');
+            throw new TypeError('ID должно быть числом');
         }
 
         if (typeof amount !== 'number') {
-            throw new Error('Сумма перевода должна быть числом');
+            throw new TypeError('Сумма перевода должна быть числом');
         }
 
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/send/',
             {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    toId,
-                    amount,
-                    key: this.key,
-                    merchantId: this.userId,
-                },
-                json: true,
-                method: 'POST'
+                toId,
+                amount,
+                key: this.key,
+                merchantId: this.userId,
             }
         );
+        
+        if (result.error) {
+            const { code, message } = result.error;
+            throw new APIError({
+                code, message
+            });
+        }
 
         return result;
     }
@@ -291,7 +274,7 @@ module.exports = class VKCoin {
      */
     getLink(amount, fixation) {
         if (typeof amount !== 'number') {
-            throw new Error('Сумма перевода должна быть числом');
+            throw new TypeError('Сумма перевода должна быть числом');
         }
 
         const payload = random(-2000000000, 2000000000);
@@ -307,28 +290,28 @@ module.exports = class VKCoin {
      */
     async getBalance(userIds) {
         if (!userIds) {
-            throw new Error('В аргумент метода нужно указать массив ID пользователей');
+            throw new ParameterError('userIds');
         }
 
         if (!Array.isArray(userIds)) {
-            throw new Error('Аргумент `userIds` должен быть массивом');
+            throw new TypeError('Аргумент `userIds` должен быть массивом');
         }
 
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/score/',
             {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    key: this.key,
-                    merchantId: this.userId,
-                    userIds
-                },
-                json: true,
-                method: 'POST'
+                key: this.key,
+                merchantId: this.userId,
+                userIds
             }
         );
+
+        if (result.error) {
+            const { code, message } = result.error;
+            throw new APIError({
+                code, message
+            });
+        }
 
         return result;
     }
@@ -351,24 +334,24 @@ module.exports = class VKCoin {
      */
     async setShopName(name) {
         if (!name) {
-            throw new Error('Вы не указали новое имя магазина');
+            throw new ParameterError('name');
         }
 
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/set/',
             {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    name,
-                    key: this.key,
-                    merchantId: this.userId,
-                },
-                json: true,
-                method: 'POST'
+                name,
+                key: this.key,
+                merchantId: this.userId,
             }
         );
+
+        if (result.error) {
+            const { code, message } = result.error;
+            throw new APIError({
+                code, message
+            });
+        }
 
         return result;
     }
@@ -381,11 +364,34 @@ module.exports = class VKCoin {
      * @returns {String} - Отформатированная строка
      */
     formatCoins(coins) {
-        coins = Number(coins);
+        if (typeof coins !== 'number') {
+            throw new TypeError('Аргумент `coins` должен быть числом');
+        }
         
         return (coins / 1000)
             .toLocaleString()
             .replace(/,/g, ' ')
             .replace(/\./g, ',');
+    }
+}
+
+module.exports = class VKCoin {
+    /**
+     * @param {Object} options - Опции класса
+     * @param {String} options.key - API-ключ
+     * @param {String} options.token - Токен пользователя
+     * @param {Number} options.userId - ID пользователя
+     */
+    constructor(options) {
+        if (!options.key) throw new ParameterError('key');
+        if (!options.token) throw new ParameterError('token');
+        if (!options.userId) throw new ParameterError('userId');
+
+        this.key = options.key;
+        this.token = options.token;
+        this.userId = options.userId;
+
+        this.api = new API(this.key, this.userId);
+        this.updates = new Updates(this.key, this.token, this.userId);
     }
 };

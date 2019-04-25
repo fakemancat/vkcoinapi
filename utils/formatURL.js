@@ -1,5 +1,4 @@
 const url = require('url');
-
 const pass = (arg1, arg2) => arg1 + arg2 - 1;
 
 module.exports = (inputURL, userId) => {
