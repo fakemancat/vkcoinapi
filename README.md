@@ -1,4 +1,4 @@
-# vkcoinapi
+# node-vkcoinapi
 Модуль для работы с API VK Coin
 
 [![npm package](https://nodei.co/npm/node-vkcoinapi.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/node-vkcoinapi/)
