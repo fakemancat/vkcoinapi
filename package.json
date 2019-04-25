@@ -1,6 +1,6 @@
 {
     "name": "node-vkcoinapi",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "description": "Работа с API VK Coin",
     "main": "index.js",
     "dependencies": {
