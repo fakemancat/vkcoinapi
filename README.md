@@ -6,6 +6,7 @@
 <a href="https://www.npmjs.com/package/node-vkcoinapi"><img src="https://img.shields.io/npm/v/node-vkcoinapi.svg" alt="Version"></a>
 <a href="https://www.npmjs.com/package/node-vkcoinapi"><img src="https://img.shields.io/npm/dt/node-vkcoinapi.svg" alt="Downloads"></a>
 </p>
+
 ### Особенности:
 * Реализованы все методы официального API
 * Удобная документация и хорошая тех. поддержка
