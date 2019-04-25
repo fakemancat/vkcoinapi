@@ -71,11 +71,18 @@ class Updates {
                 this.reconnect();
             }, this.reconnectTimeout);
         });
+        
+        let isJSON;
 
         this.ws.on('message', (message) => {
-            const jsonMessage = JSON.parse(message);
-            
-            if (jsonMessage.type === 'INIT') {
+            try {
+                message = JSON.parse(message);
+                isJSON = true;
+            } catch(error) {
+                isJSON = false;
+            }
+
+            if (isJSON && message.type === 'INIT') {
                 this.place = jsonMessage.place;
                 this.digits = jsonMessage.digits;
                 this.online = jsonMessage.top.online;
