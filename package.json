@@ -32,6 +32,7 @@
     "bugs": {
       "url": "https://github.com/fakemancat/vkcoinapi/issues"
     },
-    "homepage": "https://github.com/fakemancat/vkcoinapi#readme"
+    "homepage": "https://github.com/fakemancat/vkcoinapi#readme",
+    "typings": "./typings"
   }
   
