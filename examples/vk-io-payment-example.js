@@ -17,7 +17,7 @@ vk.updates.on(['new_message'], async(msg) => { // Прослушка новых 
     if (msg.isOutbox) return; // Если исходящее, то возвращаем
 
     if (msg.text === 'дайте коинов') { // Если входящее сообщение будет в точности равно 'дайте коинов', то...
-        await vkcoin.sendPayment(msg.senderId, 1000000); // Отправляем 1000 коинов пользователю
+        await vkcoin.api.sendPayment(msg.senderId, 1000000); // Отправляем 1000 коинов пользователю
 
         return msg.send('Мы отправили вам 1000 коинов, можете проверить!'); // Отправляем сообщение
     }

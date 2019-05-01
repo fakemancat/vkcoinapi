@@ -20,7 +20,7 @@ vkcoin.updates.onTransfer((event) => {
      * id - ID платежа
      */
 
-    const score = vkcoin.formatCoins(amount);
+    const score = vkcoin.api.formatCoins(amount);
 
     console.log(
         `Поступил платёж (${id}) от https://vk.com/id${fromId} в размере ${score} коинов`
