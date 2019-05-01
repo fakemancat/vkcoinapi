@@ -140,10 +140,13 @@ class Updates {
      * @returns {Boolean} - true, если запуск успешен
      */
     async startWebHook(options) {
-        let { url, port } = options;
+        let { url, port, path } = options;
 
         if (!url) {
             return new ParameterError('url');
+        }
+        if (!path) {
+            path = '/';
         }
 
         if (!port) options.port = 8181;
@@ -160,7 +163,7 @@ class Updates {
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/set/',
             {
-                callback: `${url}:${port}`,
+                callback: `${url}:${port}${path}`,
                 key: this.key,
                 merchantId: this.userId
             }
