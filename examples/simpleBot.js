@@ -17,7 +17,7 @@ vk.updates.on(['new_message'], async(msg) => { // Прослушка новых 
     if (msg.isOutbox) return; // Если исходящее, то возвращаем
 
     if (msg.text === 'мой баланс') { // Если входящее сообщение будет в точности равно 'мой баланс', то...
-        const result = await vkcoin.api.getBalance([ msg.senderId ]); // Получаем баланс отправителя
+        const result = await vkcoin.api.getBalance(msg.senderId); // Получаем баланс отправителя
         const coins = vkcoin.api.formatCoins(result.response[msg.senderId]); // Делаем его читабельным
 
         return msg.send(`Ваши коины: ${coins}`); // Отправляем сообщение

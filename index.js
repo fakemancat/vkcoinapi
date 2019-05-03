@@ -234,6 +234,8 @@ class API {
      * @async
      * @param {Number} toId - ID получателя 
      * @param {Number} amount - Количество коинов 
+     * @param {Boolean} fromShop - Если true, то платеж отправится от имени магазина
+     * @default fromShop false
      * @property {Object} response - Возвращаемый объект
      * @property {Number} response.id - ID транзакции
      * @property {Number} response.amount - Количество коинов
@@ -241,7 +243,7 @@ class API {
      * @returns {Promise<{ response: { id: Number, amount: Number, current: Number } }>}
      * Объект с ключами id, amount, current
      */
-    async sendPayment(toId, amount) {
+    async sendPayment(toId, amount, fromShop = false) {
         if (typeof toId !== 'number') {
             throw new TypeError('ID должно быть числом');
         }
@@ -250,14 +252,23 @@ class API {
             throw new TypeError('Сумма перевода должна быть числом');
         }
 
+        if (typeof fromShop !== 'boolean') {
+            throw new TypeError('Аргумент `fromShop` должен быть булвым значением (Boolean)');
+        }
+
+        const body = {
+            toId,
+            amount,
+            key: this.key,
+            merchantId: this.userId,
+        };
+
+        if (fromShop) {
+            body.markAsMerchant = true;
+        }
+
         const result = await request(
-            'https://coin-without-bugs.vkforms.ru/merchant/send/',
-            {
-                toId,
-                amount,
-                key: this.key,
-                merchantId: this.userId,
-            }
+            'https://coin-without-bugs.vkforms.ru/merchant/send/', body
         );
         
         if (result.error) {
@@ -297,7 +308,12 @@ class API {
         }
 
         if (!Array.isArray(userIds)) {
-            throw new TypeError('Аргумент `userIds` должен быть массивом');
+            if (typeof userIds !== 'number') {
+                throw new TypeError('Аргумент `userIds` должен быть массивом или числом');
+            }
+            else {
+                userIds = [userIds];
+            }
         }
 
         const result = await request(

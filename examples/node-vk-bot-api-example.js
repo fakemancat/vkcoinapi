@@ -15,7 +15,7 @@ bot.use((ctx, next) => { // Прослушка для каждого событ�
 });
 
 bot.command(/мой баланс/i, async (ctx) => { // Прослушка новых сообщений "мой баланс"
-    const result = await vkcoin.api.getBalance([ ctx.message.from_id ]); // Получаем баланс отправителя
+    const result = await vkcoin.api.getBalance(ctx.message.from_id); // Получаем баланс отправителя
     const coins = vkcoin.api.formatCoins(result.response[ctx.message.from_id]); // Делаем его читабельным
 
     return ctx.reply(`Ваши коины: ${coins}`); // Отправляем сообщение

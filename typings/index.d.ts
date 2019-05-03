@@ -40,8 +40,10 @@ export class API {
    * Отправить транзакцию пользователю
    * @param toId - ID получателя
    * @param amount - Сумма перевода
+   * @param {Boolean} fromShop - Если true, то платеж отправится от имени магазина
+   * @default fromShop false
    */
-  async sendPayment(toId: number, amount: number): Promise<Responses.PaymentResponse>;
+  async sendPayment(toId: number, amount: number, fromShop: boolean): Promise<Responses.PaymentResponse>;
 
   /**
    * Получить баланс пользователя / пользователей

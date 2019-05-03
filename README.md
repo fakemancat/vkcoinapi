@@ -96,6 +96,7 @@ run().catch(console.error);
 |-|-|-|
 |toId|Number|Айди получателя|
 |amount|Number|Сумма перевода|
+|fromShop|Boolean|Если true, то платеж отправится от имени магазина|
 #
 getLink - Получает ссылку для перевода
 
