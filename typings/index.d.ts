@@ -31,6 +31,12 @@ export class API {
   constructor(key: string, userId: number);
 
   /**
+   * @param method Исполняемый метод
+   * @param params Параметры метода
+   */
+  async call(method: string, params: object): Promise;
+  
+  /**
    * Получить список транзакций
    * @param tx - Массив ID транзакций. Подробнее: https://vk.cc/9ka9QS
    */

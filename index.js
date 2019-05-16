@@ -205,6 +205,32 @@ class API {
     }
 
     /**
+     * @param {String} method - Исполняемый метод
+     * @param {Object} params - Параметры метода
+     */
+    async call(method, params) {
+        if (!method) {
+            throw new ParameterError('method');
+        }
+
+        if (!params) {
+            throw new ParameterError('params');
+        }
+
+        params = Object.assign({ key: this.key, merchantId: this.userId }, params);
+        
+        const result = await request(`https://coin-without-bugs.vkforms.ru/merchant/${method}`, params);
+
+        if (result.error) {
+            const { code, message } = result.error;
+            throw new APIError({
+                code, message
+            });
+        }
+
+        return result.response;
+    }
+    /**
      * @async
      * @param {Array<Number>} tx - Массив ID транзакций. Подробнее: https://vk.cc/9ka9QS
      * @returns {Promise<[{ id: Number, from_id: Number, to_id: Number, amount: String, type: Number, payload: Number, external_id: Number, created_at: Number }]>}

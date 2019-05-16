@@ -64,6 +64,36 @@ const vkcoin = new VKCOINAPI(options = {});
 
 Токеном будет являться строка от **access_token** до **&expires**. В этом случае **xxxxxxxxxxxx**
 # API
+call - Вызывает апи-метод по его названию (Нужен, если я не успел обновить модуль)
+
+Например. Вышел новый метод у vkcoin, пусть это будет send_from_admin.
+
+Выглядеть в виде ссылки это будет так: ```https://coin-without-bugs.vkforms.ru/merchant/send_from_admin```. Вызывать его нужно так:
+```js
+async function run() {
+    const result = await vkcoin.api.call('send_from_admin', { toId: 236908027 });
+
+    console.log(result);
+}   
+
+run().catch(console.error);
+```
+Наглядно можно показать на уже существующем методе (send - делает перевод коинов):
+```js
+async function run() {
+    const result = await vkcoin.api.call('send', { toId: 1, amount: 1000, markAsMerchant: true });
+
+    console.log(result);
+}
+```
+
+|Параметр|Тип|Описание|
+|-|-|-|
+|method|String|Исполняемый метод|
+|params|Object|Параметры метода|
+
+При вызове методов с помощью **call** указывать merchatId и key в параметрах не нужно
+#
 getTransactionList - Получает список ваших транзакций
 
 ```js
