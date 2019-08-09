@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 
 const koa = require('koa');
 const koaBody = require('koa-body');
+const koaRoute = require('koa-route');
 
 const { APIError, ParameterError } = require('./utils/errors');
 
@@ -50,6 +51,8 @@ class Updates {
      * @description Запуск "прослушки"
      */
     async startPolling(callback) {
+        if (!this.token) throw new ParameterError('token');
+
         if (callback) {
             this.hasCallback = true;
             this.callbackMethod = callback;
@@ -67,9 +70,12 @@ class Updates {
         });
 
         this.ws.on('error', (data) => {
-            console.error(
-                `На стороне VK Coin возникла ошибка: ${data.message}\n\nПереподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
-            );
+            const message = `На стороне VK Coin возникла ошибка: ${data.message}\n\nПереподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`;
+
+            callback 
+                ? callback(message)
+                : console.error(message)
+            ;
 
             setTimeout(() => {
                 this.reconnect();
@@ -90,21 +96,21 @@ class Updates {
             }
 
             if (/^(?:TR)/i.test(message)) {
-                let { amount, fromId, id } = message.match(/^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i).groups;
-            
-                amount = Number(amount);
-                fromId = Number(fromId);
-                id = Number(id);
+                const { amount, fromId, id } = message.match(
+                    /^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i
+                ).groups;
 
-                const event = { amount, fromId, id };
-
-                this.transferHandler(event);
+                this.transferHandler({
+                    id: Number(id),
+                    amount: Number(amount),
+                    fromId: Number(fromId)
+                });
             }
 
             if (message === 'ALREADY_CONNECTED') {
                 if (callback) {
                     callback(
-                        `Вы зашли в VK Coin, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+                        'Вы зашли в VK Coin'
                     );
                 }
             }
@@ -112,7 +118,7 @@ class Updates {
 
         this.ws.on('close', () => {
             if (callback) {
-                callback('Соединение разорвано');
+                callback('Соединение разорвано, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...');
             }
 
             setTimeout(() => {
@@ -141,15 +147,15 @@ class Updates {
      */
     async startWebHook(options) {
         let { url, port, path } = options;
-
+        
         if (!url) {
-            return new ParameterError('url');
+            throw new ParameterError('url');
         }
         if (!path) {
             path = '/';
         }
 
-        if (!port) options.port = 8181;
+        if (!port) port = 8181;
 
         this.app = new koa();
         this.app.use(koaBody());
@@ -160,6 +166,10 @@ class Updates {
             url = `http://${url}`;
         }
 
+        if (!path.startsWith('/')) {
+            path = `/${path}`;
+        }
+
         const result = await request(
             'https://coin-without-bugs.vkforms.ru/merchant/set/',
             {
@@ -168,13 +178,18 @@ class Updates {
                 merchantId: this.userId
             }
         );
-
+        
         if (result.response === 'ON') {
-            this.app.use((ctx) => {
-                ctx.status = 200;
-
-                this.transferHandler(ctx.request.body);
-            });
+            this.app.use(
+                koaRoute.post(
+                    path,
+                    (ctx) => {
+                        ctx.status = 200;
+                        
+                        this.transferHandler(ctx.request.body);
+                    }
+                )
+            );
 
             return true;
         }
@@ -424,12 +439,13 @@ module.exports = class VKCoin {
     /**
      * @param {Object} options - Опции класса
      * @param {String} options.key - API-ключ
-     * @param {String} options.token - Токен пользователя
+     * @param {String} [options.token] - Токен пользователя
      * @param {Number} options.userId - ID пользователя
      */
     constructor(options) {
+        if (!options.token) options.token = null;
+
         if (!options.key) throw new ParameterError('key');
-        if (!options.token) throw new ParameterError('token');
         if (!options.userId) throw new ParameterError('userId');
 
         this.key = options.key;

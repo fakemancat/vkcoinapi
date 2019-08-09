@@ -39,14 +39,15 @@
 ```js
 const VKCOINAPI = require('node-vkcoinapi');
 
-const vkcoin = new VKCOINAPI(options = {});
+const vkcoin = new VKCOINAPI(options);
 ```
 
 |Опция|Тип|Описание|
 |-|-|-|
-|key|String|Ключ для взаимодействия с API|
-|userId|Number|Ваш айди ВК|
-|token|String|Ваш токен|
+|options|Object|Опции конструктора|
+|options.key|String|Ключ для взаимодействия с API|
+|options.userId|Number|Ваш айди ВК|
+|options.token|String|Ваш токен|
 
 ### Где взять эти значения
 * Получение ключа (key): [описано в начале этой статьи](https://vk.com/@hs-marchant-api)
@@ -63,6 +64,8 @@ const vkcoin = new VKCOINAPI(options = {});
 После этого в адресной строке будет подобное: **https://api.vk.com/blank.html#access_token=xxxxxxxxxxxx&expires_in=0&user_id=user_id&email=email**
 
 Токеном будет являться строка от **access_token** до **&expires**. В этом случае **xxxxxxxxxxxx**
+
+Токен нужен для получения событий через WebSocket (Моментальное получение платежей)
 # API
 call - Вызывает апи-метод по его названию (Нужен, если я не успел обновить модуль)
 
@@ -108,13 +111,13 @@ run().catch(console.error);
 
 |Параметр|Тип|Описание|
 |-|-|-|
-|tx|Array<Number>|Массив айди переводов для получения ИЛИ [1] - последняя 1000 транзакций, [2] - 100|
+|tx|Number[]|Массив айди переводов для получения ИЛИ [1] - последняя 1000 транзакций, [2] - 100|
 #
 sendPayment - Делает перевод другому пользователю (в десятичных долях)
 
 ```js
 async function run() {
-    const result = await vkcoin.api.sendPayment(toId, amount); // 1 коин = 1000 ед.
+    const result = await vkcoin.api.sendPayment(toId, amount, fromShop); // 1 коин = 1000 ед.
     
     console.log(result);
 }
@@ -187,7 +190,7 @@ run().catch(console.error);
 
 |Параметр|Тип|Описание|
 |-|-|-|
-|userIds|Array<Number>|Массив айди пользователей|
+|userIds|Number|Number[]|Массив айди пользователей|
 #
 setShopName - Меняет название магазина
 
@@ -212,13 +215,9 @@ run().catch(console.error);
 startPolling - Запускает обмен запросами между клиентом и сервером в режиме реального времени (WebSocket). Является лучшим и быстрым способом получения событий:
     
 ```js
-async function run() {
-    await vkcoin.updates.startPolling(callback);
+vkcoin.updates.startPolling(callback);
     
-    /* Тут ваши действия со слушателем */
-}
-
-run().catch(console.error);
+/* Тут ваши действия со слушателем */
 ```
 
 |Параметр|Тип|Описание|
@@ -244,47 +243,44 @@ vkcoin.updates.startPolling(async(event) => {
 
 ```
 > Подключено
-> Вы зашли в VK Coin, переподключение совершится через 5 сек...
-> Соединение разорвано
+> Вы зашли в VK Coin
+> Соединение разорвано, переподключение совершится через 5 сек...
 > Подключено
 ```
 #
 startWebHook - Запускает сервер на 8181 порте для получения событий. Может не работать на Windows и является неоптимальным способом получения событий. В этом случае можно обойтись без асинхронной функции:
 
 ```js
-vkcoin.updates.startWebHook(options = {});
+vkcoin.updates.startWebHook(options);
 
 /* Тут ваши действия со слушателем */
 ```
 
 |Опция|Тип|Описание|
 |-|-|-|
-|url|String|Адрес вашего сервера для получения событий|
-|port|Number|Порт для запуска сервера (8181 - по умолчанию)|
-|path|String|Путь вашего хука (/ - по умолчанию)|
+|options|Object|Опции вебхука|
+|options.url|String|Адрес вашего сервера для получения событий|
+|options.port|Number|Порт для запуска сервера (8181 - по умолчанию)|
+|options.path|String|Путь вашего хука (/ - по умолчанию)|
 
 При использовании startWebHook, вы лишаетесь многого: получение топов, места, онлайна и информации об объёме рынка. Всё это можно получить при использовании startPolling
 ### События
 updates.onTransfer - Перехватывает входящие платежи, принимает один аргумент
 
+**Метод ```updates.onTransfer``` нужно писать после ```updates.startPolling``` или ```updates.startWebHook```, иначе у вас ничего не сработает**
+
 ```js
-async function run() {
-    await vkcoin.updates.startPolling();
+vkcoin.updates.startPolling();
 
-    vkcoin.updates.onTransfer((event) => {
-        console.log(event);
-    });
-}
-
-run().catch(console.error);
+vkcoin.updates.onTransfer((event) => {
+    console.log(event);
+});
 ```
 
 Или
 
 ```js
-vkcoin.updates.startPolling(async(data) => {
-    console.log(data);
-    
+vkcoin.updates.startPolling(console.log).then(() => {
     vkcoin.updates.onTransfer((event) => {
         console.log(event);
     });
@@ -295,7 +291,9 @@ vkcoin.updates.startPolling(async(data) => {
 
 ```js
 vkcoin.updates.startWebHook({
-    url: 'fakeman-cat.tk', // Тут ваша ссылка
+    url: '123.123.123.123', // Тут ваша ссылка или IP-адрес сервера
+    path: '/webhook',
+    port: 1337
 });
 
 vkcoin.updates.onTransfer((event) => {
@@ -307,9 +305,9 @@ event - Объект, который хранит в себе информаци
 
 |Параметр|Тип|Описание|
 |-|-|-|
-|amount|Number|Количество коинов, которые послупили на счёт|
-|fromId|Number|Айди плательщика|
-|id|Number|Айди платежа|
+|event.amount|Number|Количество коинов, которые послупили на счёт|
+|event.fromId|Number|Айди плательщика|
+|event.id|Number|Айди платежа|
 
 Стоит отметить, что startWebHook получает только платежи по ссылке.
 
@@ -367,43 +365,28 @@ updates.startPolling(console.log).then(async() => {
 |-|-|-|
 |place|Number|Ваше место в топе|
 |online|Number|Онлайн пользователей в данный момент|
-|digits|Array<Object>|Информация о рынке и сумме переводов. Подробнее: см. ниже|
-|userTop|Array<Object>|Топ пользователей. Подробнее: см. ниже|
-|groupTop|Array<Object>|Топ сообществ. Подробнее: см. ниже|
-
-```digits```:
-
-|Параметр|Тип|Описание|
-|-|-|-|
-|description|String|Описание дигита|
-|value|Number|Значение дигита|
-|trend|Number|На сколько изменилось значение переводов за 5 минут|
-
-```userTop```:
-
-|Параметр|Тип|Описание|
-|-|-|-|
-|id|Number|ID Пользователя|
-|score|Number|Баланс|
-|first_name|String|Имя|
-|last_name|String|Фамилия|
-|is_closed|Boolean|Закрыт ли аккаунт|
-|can_access_closed|Boolean|Может ли текущий пользователь видеть профиль при is_closed = true|
-|photo_200|String<URI>|Ссылка на аватарку|
-|link|String<URI>|Ссылка на профиль|
-
-```groupTop```:
-
-|Параметр|Тип|Описание|
-|-|-|-|
-|id|Number|ID сообщества|
-|score|Number|Баланс|
-|name|String|Имя сообщества|
-|screen_name|String|Короткий адрес|
-|is_closed|Number|Закрыта ли группа|
-|type|String|Тип сообщества (паблик, страница, группа)|
-|photo_200|String<URI>|Аватарка сообщества|
-|link|String<URI>|Ссылка на сообщество|
+|digits|Object[]|Информация о рынке и сумме переводов|
+|digits.description|String|Описание дигита|
+|digits.value|Number|Значение дигита|
+|digits.trend|Number|На сколько изменилось значение переводов за 5 минут|
+|userTop|Object[]|Топ пользователей|
+|userTop.id|Number|ID Пользователя|
+|userTop.score|Number|Баланс|
+|userTop.first_name|String|Имя|
+|userTop.last_name|String|Фамилия|
+|userTop.is_closed|Boolean|Закрыт ли аккаунт|
+|userTop.can_access_closed|Boolean|Может ли текущий пользователь видеть профиль при is_closed = true|
+|userTop.photo_200|String<URI>|Ссылка на аватарку|
+|userTop.link|String<URI>|Ссылка на профиль|
+|groupTop|Object[]|Топ сообществ. Подробнее: см. ниже|
+|groupTop.id|Number|ID сообщества|
+|groupTop.score|Number|Баланс|
+|groupTop.name|String|Имя сообщества|
+|groupTop.screen_name|String|Короткий адрес|
+|groupTop.is_closed|Number|Закрыта ли группа|
+|groupTop.type|String|Тип сообщества (паблик, страница, группа)|
+|groupTop.photo_200|String|Аватарка сообщества|
+|groupTop.link|String|Ссылка на сообщество|
 
 Так же скорее всего, все значения будут равны ```null```, потому что клиент **ws** не успевает подключиться. Для решения этой проблемы могу посоветовать сделать ```delay``` функцию и интегрировать в метод:
 

@@ -19,7 +19,7 @@ export interface VKCoinParams {
   /**
    * Токен пользователя
    */
-  token: string;
+  token?: string;
 
   /**
    * ID пользователя

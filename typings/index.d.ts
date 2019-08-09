@@ -8,6 +8,11 @@ export class Updates {
    * @param userId - ID пользователя
    */
   constructor(key: string, token: string, userId: number);
+  /**
+   * Время переподключения к серверу ws
+   * @default 5000
+   */
+  reconnectTimeout: number;
   
   /**
    * Запустить прослушивание обновлений
@@ -24,7 +29,13 @@ export class Updates {
    * Запустить прослушку событий на свой сервер
    * @param options - Параметры
    */
-  async startWebhook(options: Params.WebhookParams);
+  async startWebHook(options: Params.WebhookParams);
+
+  /**
+   * 
+   * @param callback Функция, принимающая данные перевода
+   */
+  onTransfer(event: Function);
 }
 
 export class API {
