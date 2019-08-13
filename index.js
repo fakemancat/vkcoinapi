@@ -118,7 +118,9 @@ class Updates {
 
         this.ws.on('close', () => {
             if (callback) {
-                callback('Соединение разорвано, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...');
+                callback(
+                    `Соединение разорвано, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...
+                `);
             }
 
             setTimeout(() => {
