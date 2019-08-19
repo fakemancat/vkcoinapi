@@ -180,7 +180,7 @@ class Updates {
                 merchantId: this.userId
             }
         );
-        
+
         if (result.response === 'ON') {
             this.app.use(
                 koaRoute.post(
@@ -208,6 +208,37 @@ class Updates {
     onTransfer(callback) {
         if (!this.isStarted) return;
         this.transferHandler = callback;
+    }
+
+    /**
+     * Возвращает middleware для Express
+     * @param {String} [path] Путь для запросов
+     */
+    getExpressMiddleware(path = null) {
+        this.isStarted = true;
+
+        return async (req, res, next) => {
+            res.sendStatus(200);
+
+            if (
+                path !== null && (
+                    req.path !== path ||
+                    req.method !== 'POST'
+                )
+            ) {
+                return next();
+            }
+
+            if (!req.body || typeof req.body !== 'object') {
+                throw new ReferenceError(
+                    'Не удалось получить `Request.body`'
+                );
+            }
+
+            this.transferHandler(req.body);
+
+            next();
+        };
     }
 }
 
@@ -416,6 +447,41 @@ class API {
         }
 
         return result;
+    }
+
+    /**
+     * Изменяет адрес для получения событий
+     * @param {String} callback Адрес для получения событий
+     */
+    async setCallback(callback) {
+        if (!callback) {
+            throw new ParameterError('callback');
+        }
+        
+        const result = await request(
+            'https://coin-without-bugs.vkforms.ru/merchant/set/',
+            {
+                callback,
+                key: this.key,
+                merchantId: this.userId,
+            }
+        );
+
+        if (result.error) {
+            const { code, message } = result.error;
+            throw new APIError({
+                code, message
+            });
+        }
+
+        return result.response;
+    }
+
+    /**
+     * Удаляет адрес для получения событий
+     */
+    removeCallback() {
+        return this.setCallback(null);
     }
 
     /**

@@ -32,6 +32,12 @@ export class Updates {
   async startWebHook(options: Params.WebhookParams);
 
   /**
+   * Возвращает middleware для Express
+   * @param path Путь для запросов
+   */
+  getExpressMiddleware(path?: string): Function;
+
+  /**
    * 
    * @param callback Функция, принимающая данные перевода
    */
@@ -94,6 +100,17 @@ export class API {
    * @param fixation - Фиксированная сумма или нет
    */
   getLink(amount: number, fixation: boolean): string;
+
+  /**
+   * Изменяет адрес для получения событий
+   * @param {String} callback Адрес для получения событий
+   */
+  setCallback(callback: string): Promise<string>;
+
+  /**
+   * Удаляет адрес для получения событий
+   */
+  removeCallback(): Promise<string>;
 }
 
 export class VKCoin {

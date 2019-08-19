@@ -207,10 +207,40 @@ run().catch(console.error);
 |Параметр|Тип|Описание|
 |-|-|-|
 |name|String|Новое имя для магазина|
+#
+setCallback - Изменяет адрес для получения событий
+
+```js
+async function run() {
+    const result = await vkcoin.api.setCallback(callback);
+    
+    console.log(result);
+}
+
+run().catch(console.error);
+```
+
+|Параметр|Тип|Описание|
+|-|-|-|
+|callback|String|Новый адрес с указанием пути|
+#
+removeCallback - Удаляет адрес для получения событий
+
+```js
+async function run() {
+    const result = await vkcoin.api.removeCallback();
+    
+    console.log(result);
+}
+
+run().catch(console.error);
+```
+
+Параметров не принимает
 # Updates
 **updates** - Позволяет "прослушивать" события в VK Coin. Пока что я реализовал перехват входящего платежа, но вскоре придумаю что-нибудь ещё. И да, впервые работаю с сокетами :)
 ### Запуск
-Для запуска прослушивания есть 2 метода: startPolling и startWebHook
+Для запуска прослушивания есть 3 способа. Longpoll, webhook и отдельный middleware для Express
 #
 startPolling - Запускает обмен запросами между клиентом и сервером в режиме реального времени (WebSocket). Является лучшим и быстрым способом получения событий:
     
@@ -264,26 +294,56 @@ vkcoin.updates.startWebHook(options);
 |options.path|String|Путь вашего хука (/ - по умолчанию)|
 
 При использовании startWebHook, вы лишаетесь многого: получение топов, места, онлайна и информации об объёме рынка. Всё это можно получить при использовании startPolling
+#
+getExpressMiddleware - Получает функцию цепи middleware для Express.
+
+Перед использованием этого способа, нужно указать VKCOIN'у адрес для получения событий **с указанием пути**:
+```js
+vkcoin.api.setCallback('http://my-address.ru/vkcoin');
+```
+
+Дальше уже можно использовать
+
+```js
+const express = require('express');
+
+const app = express();
+
+/**
+ * Это действие нужно обязательно
+ * Нужно для получения тела запроса
+ */
+app.use(express.json());
+
+// Дальше есть два варианта развития событий
+
+// 1: Добавление функции в цепь middleware
+app.use(
+    vkcoin.updates.getExpressMiddleware('/vkcoin')
+);
+
+// 2: Или определить функцию на свой роут
+app.post(
+    '/vkcoin',
+    vkcoin.updates.getExpressMiddleware()
+);
+
+// Выбирайте на свой вкус :)
+
+/* Тут ваши действия со слушателем */
+```
+
+
 ### События
 updates.onTransfer - Перехватывает входящие платежи, принимает один аргумент
 
-**Метод ```updates.onTransfer``` нужно писать после ```updates.startPolling``` или ```updates.startWebHook```, иначе у вас ничего не сработает**
+**Метод ```updates.onTransfer``` нужно писать после ```updates.startPolling```, ```updates.startWebHook``` или ```app.use(updates.getExpressMiddleware('/'))```, иначе у вас ничего не сработает**
 
 ```js
 vkcoin.updates.startPolling();
 
 vkcoin.updates.onTransfer((event) => {
     console.log(event);
-});
-```
-
-Или
-
-```js
-vkcoin.updates.startPolling(console.log).then(() => {
-    vkcoin.updates.onTransfer((event) => {
-        console.log(event);
-    });
 });
 ```
 
@@ -299,6 +359,22 @@ vkcoin.updates.startWebHook({
 vkcoin.updates.onTransfer((event) => {
     console.log(event);
 });
+```
+
+Или
+
+```js
+async function run() {
+    await vkcoin.api.setCallback('http://my-address.ru/vkcoin');
+
+    app.use(
+        vkcoin.updates.getExpressMiddleware('/vkcoin')
+    )
+
+    vkcoin.updates.onTransfer((event) => {
+        console.log(event);
+    });
+}
 ```
 
 event - Объект, который хранит в себе информацию о платеже:
