@@ -51,6 +51,14 @@ class Updates {
      * @description Запуск "прослушки"
      */
     async startPolling(callback) {
+        if (!this.transferHandler) {
+            if (callback) {
+                callback('Вы не запустили прослушку платежа `onTransfer`');
+            }
+
+            return;
+        }
+
         if (!this.token) throw new ParameterError('token');
 
         if (callback) {
@@ -119,8 +127,8 @@ class Updates {
         this.ws.on('close', () => {
             if (callback) {
                 callback(
-                    `Соединение разорвано, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...
-                `);
+                    `Соединение разорвано, переподключение совершится через ${Math.round(this.reconnectTimeout / 1000)} сек...`
+                );
             }
 
             setTimeout(() => {
@@ -148,6 +156,10 @@ class Updates {
      * @returns {Boolean} - true, если запуск успешен
      */
     async startWebHook(options) {
+        if (!this.transferHandler) {
+            return false;
+        }
+
         let { url, port, path } = options;
         
         if (!url) {
@@ -164,7 +176,7 @@ class Updates {
         this.app.listen(port);
         this.isStarted = true;
 
-        if (!/^(?:https?)/.test(url)) {
+        if (!url.startsWith('http')) {
             url = `http://${url}`;
         }
 
@@ -183,14 +195,11 @@ class Updates {
 
         if (result.response === 'ON') {
             this.app.use(
-                koaRoute.post(
-                    path,
-                    (ctx) => {
-                        ctx.status = 200;
-                        
-                        this.transferHandler(ctx.request.body);
-                    }
-                )
+                koaRoute.post(path, (ctx) => {
+                    ctx.status = 200;
+                    
+                    this.transferHandler(ctx.request.body);
+                })
             );
 
             return true;
@@ -206,7 +215,6 @@ class Updates {
      * Объект с ключами amount - сумма, fromId - отправитель и id - ID транзакции
      */
     onTransfer(callback) {
-        if (!this.isStarted) return;
         this.transferHandler = callback;
     }
 
@@ -219,6 +227,10 @@ class Updates {
 
         return async (req, res, next) => {
             res.sendStatus(200);
+
+            if (!this.transferHandler) {
+                return next();
+            }
 
             if (
                 path !== null && (

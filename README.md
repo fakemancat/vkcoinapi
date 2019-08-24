@@ -337,7 +337,6 @@ app.post(
 ### События
 updates.onTransfer - Перехватывает входящие платежи, принимает один аргумент
 
-**Метод ```updates.onTransfer``` нужно писать после ```updates.startPolling```, ```updates.startWebHook``` или ```app.use(updates.getExpressMiddleware('/'))```, иначе у вас ничего не сработает**
 
 ```js
 vkcoin.updates.startPolling();
