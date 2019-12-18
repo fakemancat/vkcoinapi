@@ -3,6 +3,7 @@ const WebSocket = require('ws');
 const koa = require('koa');
 const koaBody = require('koa-body');
 const koaRoute = require('koa-route');
+const EventEmitter = require('events');
 
 const { APIError, ParameterError } = require('./utils/errors');
 
@@ -17,13 +18,15 @@ const getURLbyToken = require('./utils/getURLbyToken');
  *  Впервые работаю с вебсокетами и realtime в принципе
  *  В будущем 100% будет рефактор кода, когда я начну больше разбираться в этом :)
  */
-class Updates {
+class Updates extends EventEmitter {
     /**
      * @param {String} key - API-ключ
      * @param {String} token - Токен пользователя 
      * @param {Number} userId - ID пользователя 
      */
     constructor(key, token, userId) {
+        super();
+
         // Конфигурация
         this.key = key;
         this.token = token;
@@ -51,14 +54,6 @@ class Updates {
      * @description Запуск "прослушки"
      */
     async startPolling(callback) {
-        if (!this.transferHandler) {
-            if (callback) {
-                callback('Вы не запустили прослушку платежа `onTransfer`');
-            }
-
-            return;
-        }
-
         if (!this.token) throw new ParameterError('token');
 
         if (callback) {
@@ -108,7 +103,7 @@ class Updates {
                     /^(?:TR)\s(?<amount>.*)\s(?<fromId>.*)\s(?<id>.*)/i
                 ).groups;
 
-                this.transferHandler({
+                this.emit('payment', {
                     id: Number(id),
                     amount: Number(amount),
                     fromId: Number(fromId)
@@ -156,10 +151,6 @@ class Updates {
      * @returns {Boolean} - true, если запуск успешен
      */
     async startWebHook(options) {
-        if (!this.transferHandler) {
-            return false;
-        }
-
         let { url, port, path } = options;
         
         if (!url) {
@@ -198,7 +189,7 @@ class Updates {
                 koaRoute.post(path, (ctx) => {
                     ctx.status = 200;
                     
-                    this.transferHandler(ctx.request.body);
+                    this.emit('payment', ctx.request.body);
                 })
             );
 
@@ -215,7 +206,7 @@ class Updates {
      * Объект с ключами amount - сумма, fromId - отправитель и id - ID транзакции
      */
     onTransfer(callback) {
-        this.transferHandler = callback;
+        this.on('payment', callback);
     }
 
     /**
@@ -227,10 +218,6 @@ class Updates {
 
         return async (req, res, next) => {
             res.sendStatus(200);
-
-            if (!this.transferHandler) {
-                return next();
-            }
 
             if (
                 path !== null && (
@@ -247,7 +234,7 @@ class Updates {
                 );
             }
 
-            this.transferHandler(req.body);
+            this.emit('payment', req.body);
 
             next();
         };
